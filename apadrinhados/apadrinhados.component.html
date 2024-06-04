@@ -1,0 +1,112 @@
+<div class="grid">
+  <div class="col-12">
+      <div class="card px-6 py-6">
+          <p-toast></p-toast>
+          <p-toolbar styleClass="mb-4">
+              <ng-template pTemplate="left">
+                  <div class="my-2">
+                      <button pButton pRipple label="New" icon="pi pi-plus" class="p-button-success mr-2" (click)="openNew()"></button>
+                      <button pButton pRipple label="Delete" icon="pi pi-trash" class="p-button-danger" (click)="deleteSelectedApadrinhamentos()" [disabled]="!selectedApadrinhamentos || !selectedApadrinhamentos.length"></button>
+                  </div>
+              </ng-template>
+
+              <ng-template pTemplate="right">
+                  <p-fileUpload mode="basic" accept="image/*" [maxFileSize]="1000000" label="Import" chooseLabel="Import" class="mr-2 inline-block"></p-fileUpload>
+                  <button pButton pRipple label="Export" icon="pi pi-upload" class="p-button-help" (click)="dt.exportCSV()"></button>
+              </ng-template>
+          </p-toolbar>
+
+          <p-table #dt [value]="apadrinhamentos" [columns]="cols" responsiveLayout="scroll" [rows]="10" [globalFilterFields]="['animal.name','initialDate','sponsorshipType','status']" [paginator]="true" [rowsPerPageOptions]="[10,20,30]" [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [(selection)]="selectedApadrinhamentos" selectionMode="multiple" [rowHover]="true" dataKey="id">
+              <ng-template pTemplate="caption">
+                  <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
+                      <h5 class="m-0">Manage Apadrinhamentos</h5>
+                      <span class="block mt-2 md:mt-0 p-input-icon-left">
+                          <i class="pi pi-search"></i>
+                          <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Search..."  class="w-full sm:w-auto"/>
+                      </span>
+                  </div>
+              </ng-template>
+              <ng-template pTemplate="header">
+                  <tr>
+                      <th style="width: 3rem">
+                          <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                      </th>
+                      <th pSortableColumn="id">id <p-sortIcon field="id"></p-sortIcon></th>
+                      <th pSortableColumn="animal.name">Nome do Animal <p-sortIcon field="animal.name"></p-sortIcon></th>
+                      <th pSortableColumn="initialDate">data de inicio <p-sortIcon field="initialDate"></p-sortIcon></th>
+                      <th pSortableColumn="sponsorshipType">tipo do patrocinio <p-sortIcon field="sponsorshipType"></p-sortIcon></th>
+                      <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+                      <th></th>
+                  </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-apadrinhamento>
+                  <tr>
+                      <td>
+                          <p-tableCheckbox [value]="apadrinhamento"></p-tableCheckbox>
+                      </td>
+                      <td style="width:14%; min-width:10rem;"><span class="p-column-title">ID</span>
+                          {{apadrinhamento.id}}
+                      </td>
+                      <td style="width:14%; min-width:10rem;">
+                          <span class="p-column-title">Nome do Animal</span>
+                          {{apadrinhamento.animal?.name}}
+                      </td>
+                      <td style="width:14%; min-width:10rem;"><span class="p-column-title">Data de Início</span>
+                          {{apadrinhamento.initialDate | date:'dd/MM/yyyy'}}
+                      </td>
+                      <td style="width:14%; min-width:8rem;">
+                          <span class="p-column-title">Tipo do Patrocínio</span>
+                          {{apadrinhamento.sponsorshipType}}
+                      </td>
+                      <td style="width:14%; min-width:10rem;">
+                          <span class="p-column-title">Status</span>
+                          <span [class]="'status-' + (apadrinhamento.status ? apadrinhamento.status.toLowerCase() : '')">{{apadrinhamento.status}}</span>
+                      </td>
+                      <td>
+                          <div class="flex">
+                              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" (click)="editApadrinhamento(apadrinhamento)"></button>
+                              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-warning" (click)="deleteApadrinhamento(apadrinhamento)"></button>
+                          </div>
+                      </td>
+                  </tr>
+              </ng-template>
+          </p-table>
+      </div>
+
+      <p-dialog [(visible)]="apadrinhamentoDialog" [style]="{width: '450px'}" header="Detalhes do Apadrinhamento" [modal]="true" class="p-fluid">
+          <ng-template pTemplate="content">
+              <div class="field">
+                  <label for="animalName">Nome do Animal</label>
+                  <input type="text" pInputText id="animalName" [(ngModel)]="apadrinhamento.animal?.name" required autofocus [ngClass]="{'ng-invalid ng-dirty' : submitted && !apadrinhamento.animal?.name}"/>
+                  <small class="ng-dirty ng-invalid" *ngIf="submitted && !apadrinhamento.animal?.name">Nome do animal é obrigatório.</small>
+              </div>
+              <div class="field">
+                  <label for="initialDate">Data de Início</label>
+                  <input type="text" pInputText id="initialDate" [(ngModel)]="apadrinhamento.initialDate" required/>
+              </div>
+              <div class="field">
+                  <label for="sponsorshipType">Tipo do Patrocínio</label>
+                  <input type="text" pInputText id="sponsorshipType" [(ngModel)]="apadrinhamento.sponsorshipType" required/>
+              </div>
+              <div class="field">
+                  <label for="status">Status</label>
+                  <p-dropdown [(ngModel)]="apadrinhamento.status" inputId="status" optionValue="value" [options]="statuses" placeholder="Selecione">
+                      <ng-template pTemplate="selectedItem">
+                          <span *ngIf="apadrinhamento && apadrinhamento.status" [class]="'status-' + apadrinhamento.status.toString().toLowerCase()">{{apadrinhamento.status}}</span>
+                      </ng-template>
+                      <ng-template let-option pTemplate="item">
+                          <span [class]="'status-' + option.value">{{option.label}}</span>
+                      </ng-template>
+                  </p-dropdown>
+              </div>
+          </ng-template>
+
+          <ng-template pTemplate="footer">
+              <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="hideDialog()"></button>
+              <button pButton pRipple label="Salvar" icon="pi pi-check" class="p-button-text" (click)="saveApadrinhamento()"></button>
+          </ng-template>
+      </p-dialog>
+
+
+  </div>
+</div>
